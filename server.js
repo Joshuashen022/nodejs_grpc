@@ -55,7 +55,7 @@ function unaryEcho(call, callback) {
   callback(null, call.request, outgoingTrailers);
 }
 
-function serverStreamingEcho(call) {
+async function serverStreamingEcho(call) {
   console.log('--- ServerStreamingEcho ---');
   const incomingTimestamps = call.metadata.get('timestamp');
   if (incomingTimestamps.length > 0) {
@@ -68,12 +68,15 @@ function serverStreamingEcho(call) {
   const outgoingHeaders = new grpc.Metadata();
   outgoingHeaders.set('location', 'MTV');
   outgoingHeaders.set('timestamp', new Date().toISOString());
-  call.sendMetadata(outgoingHeaders);
-
+  call.sendMetadata(outsgoingHeaders);
+  
+  await asyncWait(1000);
+  
   console.log(`Request received ${JSON.stringify(call.request)}`);
   for (let i = 0; i < STREAMING_COUNT; i++) {
     console.log(`Echo message ${JSON.stringify(call.request)}`);
     call.write(call.request);
+    await asyncWait(1000);
   }
 
   const outgoingTrailers = new grpc.Metadata();
@@ -140,6 +143,12 @@ const serviceImplementation = {
   clientStreamingEcho,
   bidirectionalStreamingEcho
 };
+
+function asyncWait(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 function main() {
   const server = new grpc.Server();

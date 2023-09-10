@@ -1,0 +1,474 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+package protocol;
+
+service Tr3b {
+  rpc heartbeat (HeartbeatReq) returns (google.protobuf.Empty);
+  rpc sayGoodbye (HeartbeatReq) returns (google.protobuf.Empty);
+  rpc hotLoadConfig (HotLoadReq) returns (HotLoadResp);
+  rpc sendOrder (SendOrderReq) returns (SendOrderResp);
+  rpc sendBatchOrder (SendBatchOrderReq) returns (SendBatchOrderResp);
+  rpc queryOrder (QueryOrderReq) returns (QueryOrderResp);
+  rpc queryOrderRaw (QueryOrderReq) returns (QueryOrderRawResp);
+  rpc queryAllOrders (QueryAllOrdersReq) returns (QueryAllOrdersResp);
+  rpc queryAllOrdersRaw (QueryAllOrdersRawReq) returns (QueryAllOrdersRawResp);
+  rpc queryAccountOrders (QueryAccountOrdersReq) returns (QueryAccountOrdersResp);
+  rpc cancelOrder(CancelOrderReq) returns (CancelOrderResp);
+  rpc cancelBatchOrder(CancelBatchOrderReq) returns (CancelBatchOrderResp);
+  rpc cancelAllOrders(CancelAllOrdersReq) returns (CancelAllOrdersResp);
+  rpc closeOrder(CloseOrderReq) returns (CloseOrderResp);
+  rpc getSpotPosition(GetPositionReq) returns (SpotPositionReply);
+  rpc getPerpetualPosition(GetPositionReq) returns (PerpetualPositionReply);
+  rpc getPerpetualFundingRate(GetFundingRateReq) returns (FundingRateReply);
+  rpc getMarginPosition(GetPositionReq) returns (MarginPositionReply);
+  rpc getAllSpotPosition(google.protobuf.Empty) returns (AllSpotPositionReply);
+  rpc getAllPerpetualPosition(google.protobuf.Empty) returns (AllPerpetualPositionReply);
+  rpc getAllPerpetualFundingRate(google.protobuf.Empty) returns (AllFundingRateReply);
+  rpc getAllMarginPosition(google.protobuf.Empty) returns (AllMarginPositionReply);
+  rpc startOrderStream  (StartOrderStreamReq) returns (stream OrderInfo){}
+  rpc startOrderSnapshotStream  (StartOrderSnapshotStreamReq) returns (stream OrderInfoList){}
+  rpc unlockErrorLimit (UnlockErrorLimitReq) returns (google.protobuf.Empty){}
+}
+
+message SendOrderReq {
+  string exchange = 1;
+  string account = 2;
+  string strategy = 3;
+  string pair = 4;
+  string uuid = 5;
+  double amount = 6;
+  double price = 7;
+  bool is_buy = 8;
+  bool is_maker = 9;
+  bool is_hidden = 10;
+  int32 suggest_poll_interval = 11;
+  bool is_auto_borrow = 12;
+}
+
+message SendOrderResp {
+  bool is_ok = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message SendBatchOrderReq {
+  string exchange = 1;
+  string account = 2;
+  string strategy = 3;
+  repeated SingleBatchOrderConfig orders=4;
+  int32 suggest_poll_interval = 5;
+
+  message SingleBatchOrderConfig {
+    string pair = 1;
+    string uuid = 2;
+    double amount = 3;
+    double price = 4;
+    bool is_buy = 5;
+    bool is_maker = 6;
+    bool is_hidden = 7;
+    bool is_auto_borrow = 8;
+  }
+}
+
+message SendBatchOrderResp {
+  repeated SingleBatchOrderReply orders = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+
+}
+
+message SingleBatchOrderReply {
+  string uuid = 1;
+  bool is_ok = 2;
+  uint32 error_code = 3;
+  int32 raw_error_code = 4;
+}
+
+message QueryOrderReq {
+  string strategy = 1;
+  string uuid = 2;
+}
+
+message QueryOrderResp {
+  bool is_ok = 1;
+  OrderInfo order_info = 2;
+}
+
+message QueryOrderRawResp {
+  OrderInfo order_info = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message QueryAccountOrdersReq {
+  string exchange = 1;
+  string account = 2;
+}
+
+message QueryAccountOrdersResp {
+  AccountOrdersResp active = 1;
+  AccountOrdersResp closed = 2;
+}
+
+message AccountOrdersResp {
+  repeated OrderDetail orders=1;
+  int32 time = 2;
+  uint32 error_code = 3;
+  int32 raw_error_code = 4;
+  bool is_restful = 5;
+
+  message OrderDetail {
+    string exchange = 1;
+    string account = 2;
+    string client_order_id = 3;
+    string outer_order_id = 4;
+    string symbol = 5;
+    string direction = 6;
+    double order_price = 7;
+    double order_amount = 8;
+    int64 order_time = 9;
+    double exe_amount = 10;
+    double exe_price = 11;
+    string status = 12;
+  }
+}
+
+message QueryAllOrdersReq {
+  string strategy = 1;
+}
+
+message QueryAllOrdersResp {
+  repeated OrderInfo orders=1;
+}
+
+message QueryAllOrdersRawReq {
+  string strategy = 1;
+  string exchange = 2;
+  string account = 3;
+  string symbol = 4;
+}
+
+message QueryAllOrdersRawResp {
+  repeated Order orders=1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+
+  message Order{
+    string orderId = 1;
+    string symbol = 2;
+    string clientOrderId = 3;
+    string type = 4;
+    string side = 5;
+    double origQty = 6;
+    double order_price = 7;
+    double executedQty = 8;
+    int32 status = 9;
+    uint64  ts = 10;
+    double avg_price = 11;
+  }
+}
+
+message CancelOrderReq {
+  string strategy = 1;
+  string account = 2;
+  string uuid = 3;
+}
+
+message CancelOrderResp {
+  bool is_ok = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message CancelBatchOrderReq {
+  string strategy = 1;
+  string account = 2;
+  string exchange = 3;
+  repeated string uuid_queue = 4;
+}
+
+message CancelBatchOrderResp {
+  repeated SingleBatchOrderReply orders = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message CancelAllOrdersReq {
+  string strategy = 1;
+  string exchange = 2;
+  string account = 3;
+  string pair = 4;
+}
+
+message CancelAllOrdersResp {
+  bool is_ok = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message CloseOrderReq {
+  string strategy = 1;
+  string account = 2;
+  string uuid = 3;
+}
+
+message CloseOrderResp {
+  bool is_ok = 1;
+}
+
+message GetPositionReq {
+  string exchange = 1;
+  string account = 2;
+}
+
+message GetMarginPositionResp {
+  repeated MarginPositionDetail positions = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message PositionDetail {
+  string name = 1;
+  double free = 2;
+  double frozen = 3;
+  double total = 4;
+}
+
+message FuturePositionDetail {
+  string name = 1;
+  string direction = 2;
+  double amount = 3;
+}
+
+message MarginPositionDetail {
+  string name = 1;
+  string locked = 2;
+  string borrowed = 3;
+  string interest = 4;
+}
+
+message GetRiskRateReq {
+  string exchange = 1;
+  string account = 2;
+}
+
+message GetRiskRateResp {
+  double risk_rate = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message GetLoanInfoReq {
+  string exchange = 1;
+  string account = 2;
+  string currency = 3;
+}
+
+message GetLoanInfoResp {
+  double usdt_amount = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message GetMarginLoanReq {
+  string exchange = 1;
+  string account = 2;
+  string currency = 3;
+  string amount = 4;
+}
+
+message GetMarginLoanResp {
+  MarginLoanInfo info = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message MarginLoanInfo {
+  int64 id = 1;
+  uint64 create_time = 2;
+  uint64 update_time = 3;
+  string currency = 4;
+  string amount = 5;
+  string text = 6;
+  int32 status = 7;
+  string repaid = 8;
+  string repaid_interest = 9;
+  string unpaid_interest = 10;
+}
+
+message GetMarginReplyReq {
+  string exchange = 1;
+  string account = 2;
+  string currency = 3;
+  string amount = 4;
+}
+
+message GetMarginReplyResp {
+  repeated MarginLoanInfo repayments = 1;
+  uint32 error_code = 2;
+  int32 raw_error_code = 3;
+}
+
+message HotLoadReq {}
+message HotLoadResp {
+  bool is_ok = 1;
+  optional string reason = 2;
+}
+
+message HeartbeatReq {
+  string strategy = 1;
+}
+
+message StartOrderStreamReq {
+  string strategy = 1;
+}
+
+message StartOrderSnapshotStreamReq {
+  string strategy = 1;
+}
+
+message OrderInfo {
+  string exchange = 1;
+  string account = 2;
+  string pair = 3;
+  string uuid = 4;
+  string order_id = 5;
+  string client_oid = 6;
+  Status status = 7;
+  uint64 server_update_ts = 8;
+  uint64 exchange_update_ts = 9;
+  double amount = 10;
+  double executed_amount = 11;
+  double order_price = 12;
+  double avg_price = 13;
+  bool is_buy = 14;
+  bool is_maker = 15;
+  bool is_hidden = 16;
+  bool is_data_from_ws = 17;
+
+  enum Status {
+    Active = 0;
+    Closed = 1;
+    Unknown = 2;
+  }
+}
+
+message OrderInfoList {
+  repeated OrderInfo orders = 1;
+}
+
+message UnlockErrorLimitReq {
+  string strategy = 1;
+}
+
+message SpotPositionReply {
+  optional SpotPositionInfo info = 1;
+  uint32 error_code = 2;
+}
+
+message AllSpotPositionReply {
+  repeated SpotPositionInfo info_list = 1;
+  uint32 error_code = 2;
+}
+
+message SpotPositionInfo {
+  repeated AssetInfo assets = 1;
+  int64 utc_ts_in_millis = 2;
+  string exchange = 3;
+  string account = 4;
+}
+
+message PerpetualPositionReply {
+  optional PerpetualPositionInfo info = 1;
+  uint32 error_code = 2;
+}
+
+message AllPerpetualPositionReply {
+  repeated PerpetualPositionInfo info_list = 1;
+  uint32 error_code = 2;
+}
+
+message PerpetualPositionInfo {
+  repeated AssetInfo assets = 1;
+  repeated Position positions = 2;
+  int64 utc_ts_in_millis = 3;
+  string exchange = 4;
+  string account = 5;
+}
+
+message MarginPositionReply {
+  optional MarginPositionInfo info = 1;
+  uint32 error_code = 2;
+}
+
+message AllMarginPositionReply {
+  repeated MarginPositionInfo info_list = 1;
+  uint32 error_code = 2;
+}
+
+message MarginPositionInfo {
+  repeated AssetInfo assets = 1;
+  int64 utc_ts_in_millis = 2;
+  MarginRiskRate risk_rate = 3;
+  string exchange = 4;
+  string account = 5;
+}
+
+message MarginRiskRate {
+  double risk_rate = 1;
+  int64 utc_ts_in_millis = 2;
+}
+
+message AssetInfo {
+  string symbol = 1;
+  double free = 2;
+  double frozen = 3;
+  double total = 4;
+  double loan = 5;
+  double interest = 6;
+}
+
+message Position {
+  string symbol = 1;
+  double amount = 2;
+  bool is_long = 3;
+  optional PositionRiskDetail risk_detail = 4;
+}
+
+message PositionRiskDetail {
+  int64 utc_ts_in_millis = 1;
+  double liq_price = 2;
+  double leverage = 3;
+}
+
+message GetFundingRateReqs {
+  string exchange = 1;
+}
+
+message FundingRateReply {
+  optional FundingRateInfo info = 1;
+  uint32 error_code = 2;
+}
+
+message AllFundingRateReply {
+  repeated FundingRateInfo info_list = 1;
+  uint32 error_code = 2;
+}
+
+message FundingRateInfo {
+  string exchange = 1;
+  int64 utc_ts_in_millis = 2;
+  repeated FundingRate rates = 3;
+
+  message FundingRate {
+    string symbol = 1;
+    double rate = 2;
+    double rate_estimated = 3;
+    uint64 interval = 4;
+    uint64 next_apply_ts = 5;
+    double index_price = 6;
+    double mark_price = 7;
+    uint64 server_ts = 8;
+  }
+}

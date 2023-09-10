@@ -16,7 +16,7 @@
  *
  */
 
-const grpc = require('@grpc/grpc-js');
+const grpc = require('@grpc/grpc-ts');
 const protoLoader = require('@grpc/proto-loader');
 const parseArgs = require('minimist');
 
